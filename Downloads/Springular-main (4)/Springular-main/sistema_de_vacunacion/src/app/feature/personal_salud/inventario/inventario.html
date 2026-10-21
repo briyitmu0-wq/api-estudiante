@@ -1,0 +1,97 @@
+<section class="inventario">
+
+  <h1>Inventario</h1>
+
+  <p class="subtitulo">
+    Consulta de existencias
+  </p>
+
+  <!-- BUSCADOR -->
+  <div class="toolbar">
+
+    <div class="campo-busqueda">
+
+      <input
+        #inputBusqueda
+        type="text"
+        placeholder="Buscar nombre o lote de vacuna"
+        (input)="buscarVacunas($any($event.target).value)"
+      />
+
+    </div>
+
+    <button
+      class="btn-primario"
+      type="button"
+      (click)="buscarVacunas(inputBusqueda.value)"
+    >
+      <i class="bi bi-search"></i>
+      Buscar
+    </button>
+
+  </div>
+
+
+  <!-- CARGANDO -->
+  @if (cargando()) {
+
+    <p class="sin-resultados">
+      Cargando inventario...
+    </p>
+
+  } @else if (hayResultados()) {
+
+    <!-- TABLA -->
+    <table class="tabla">
+
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Lote</th>
+          <th>Stock</th>
+          <th>Vence</th>
+        </tr>
+      </thead>
+
+      <tbody>
+
+        @for (
+          item of inventarioFiltrado();
+          track item.idVacuna + '-' + item.numeroLote
+        ) {
+
+          <tr>
+
+            <td>
+              {{ item.nombre }}
+            </td>
+
+            <td>
+              {{ item.numeroLote }}
+            </td>
+
+            <td>
+              {{ item.stock }}
+            </td>
+
+            <td>
+              {{ item.fechaVencimiento | date:'dd/MM/yyyy' }}
+            </td>
+
+          </tr>
+
+        }
+
+      </tbody>
+
+    </table>
+
+  } @else {
+
+    <p class="sin-resultados">
+      No se encontraron vacunas con ese criterio.
+    </p>
+
+  }
+
+</section>

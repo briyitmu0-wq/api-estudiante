@@ -1,0 +1,109 @@
+<!-- feature/personal_salud/ciudadanos/ciudadanos.html -->
+<section class="ciudadanos">
+  <h1>Ciudadanos</h1>
+  <p class="subtitulo">Registro y consulta de información de ciudadanos</p>
+
+  <div class="toolbar">
+    <div class="campo-busqueda">
+      <input
+        type="text"
+        placeholder="Buscar por documento o nombre"
+        (input)="buscar($any($event.target).value)"
+      />
+    </div>
+    <button class="btn-primario" (click)="toggleFormulario()">
+      {{ mostrarFormulario() ? '✕' : '+' }} Registrar
+    </button>
+  </div>
+
+  @if (mostrarFormulario()) {
+    <form [formGroup]="form" (ngSubmit)="registrar()" class="form-nuevo">
+      <div class="campo">
+        <label>Tipo de documento</label>
+        <select formControlName="tipoDocumento">
+          @for (opcion of opcionesTipoDocumento; track opcion) {
+            <option [value]="opcion">{{ opcion }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="campo">
+        <label>Número de documento</label>
+        <input formControlName="numeroDocumento" placeholder="Ej. 1048555222" />
+      </div>
+
+      <div class="campo">
+        <label>Nombre</label>
+        <input formControlName="nombre" placeholder="Ej. María" />
+      </div>
+
+      <div class="campo">
+        <label>Apellido</label>
+        <input formControlName="apellido" placeholder="Ej. Ortíz" />
+      </div>
+
+      <div class="campo">
+        <label>Email</label>
+        <input formControlName="email" type="email" placeholder="Ej. maria@correo.com" />
+      </div>
+
+      <div class="campo">
+        <label>Contraseña</label>
+        <input formControlName="contrasena" type="password" placeholder="Mínimo 8 caracteres" />
+      </div>
+
+      <div class="campo">
+        <label>Teléfono</label>
+        <input formControlName="telefono" placeholder="Ej. 3001234567" />
+      </div>
+
+      <div class="campo">
+        <label>Fecha de nacimiento</label>
+        <input formControlName="fechaNacimiento" type="date" />
+      </div>
+
+      <div class="campo">
+        <label>Género</label>
+        <select formControlName="genero">
+          @for (opcion of opcionesGenero; track opcion) {
+            <option [value]="opcion">{{ opcion }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="campo campo-ancho">
+        <label>Dirección</label>
+        <input formControlName="direccion" placeholder="Ej. Calle 45 #12-30" />
+      </div>
+
+      <button type="submit" class="btn-guardar" [disabled]="form.invalid">Guardar</button>
+    </form>
+  }
+
+  
+    <table class="tabla">
+      <thead>
+        <tr>
+          <th>Nombre completo</th>
+          <th>Documento</th>
+          <th>Edad</th>
+          <th>Última vacuna aplicada</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (ciudadano of ciudadanosFiltrados(); track ciudadano.id) {
+          <tr>
+            <td>{{ ciudadano.nombre }} {{ ciudadano.apellido }}</td>
+            <td>{{ ciudadano.numeroDocumento }}</td>
+            <td>{{ edadDe(ciudadano.fechaNacimiento) }}</td>
+            <td>{{ ciudadano.ultimaVacunaAplicada || '—' }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    @if (!hayResultados()) {
+      <p class="sin-resultados">No se encontraron ciudadanos con ese criterio.</p>
+    }
+  
+</section>

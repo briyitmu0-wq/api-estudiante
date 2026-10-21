@@ -1,0 +1,1 @@
+export type NumeroDosis = "PRIMERA" | "SEGUNDA" | "TERCERA" | "REFUERZO" | "UNICA";

@@ -1,0 +1,35 @@
+<section class="vacunas-pendientes">
+  <h1>Vacunas pendientes</h1>
+  <p class="subtitulo">
+    Calculadas según el esquema de vacunación
+  </p>
+
+  @if (cargando()) {
+    <p class="mensaje">Cargando vacunas pendientes...</p>
+  }
+  @else if (hayResultados()) {
+    <div class="lista-pendientes">
+      @for (vacuna of vacunasFiltradas(); track vacuna.vacunaNombre + vacuna.dosis) {
+        <div
+          class="pendiente-card"
+          [class.pendiente-card--proxima]="esProxima(vacuna.fechaProgramada)"
+        >
+          <span class="vacuna">
+            {{ vacuna.vacunaNombre }}
+          </span>
+          <span
+            class="estado"
+            [class.estado-gris]="!esProxima(vacuna.fechaProgramada)"
+          >
+            {{ esProxima(vacuna.fechaProgramada) ? 'Próxima' : etiquetaTiempo(vacuna.fechaProgramada) }}
+          </span>
+        </div>
+      }
+    </div>
+  }
+  @else {
+    <p class="mensaje">
+      No tienes vacunas pendientes.
+    </p>
+  }
+</section>

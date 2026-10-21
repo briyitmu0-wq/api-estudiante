@@ -1,0 +1,296 @@
+{
+  "name": "ASYS - Agente Apify Scraping & WhatsApp Prospección",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "30 9 * * 1-6"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        1072,
+        -16
+      ],
+      "id": "f7c41a4f-22a8-4367-bf85-facad49873c7",
+      "name": "Disparador Diario (9:30 AM Col)"
+    },
+    {
+      "parameters": {
+        "jsCode": "const ciudades = [\n  'Barranquilla', 'Bogotá', 'Medellín', 'Cali', 'Bucaramanga',\n  'Cartagena', 'Pereira', 'Santa Marta', 'Ibagué', 'Manizales',\n  'Cúcuta', 'Villavicencio', 'Montería', 'Valledupar', 'Pasto'\n];\n\nconst diaDelAno = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24);\nconst ciudadHoy = ciudades[diaDelAno % ciudades.length];\n\nreturn {\n  ciudad: ciudadHoy,\n  query: `barberia en ${ciudadHoy}, Colombia`,\n  maxResultadosPorBusqueda: 25\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1296,
+        -16
+      ],
+      "id": "06f9281d-70a5-4e0a-bdac-f3af71dc84cd",
+      "name": "Elegir Ciudad del Día"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.apify.com/v2/actors/compass~crawler-google-places/run-sync-get-dataset-items",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "token",
+              "value": "apify_api_JhflLCPYBBeuslGQgfehiKEy2Un2fd0ZtbQZ"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"searchStringsArray\": [\"{{ $json.query }}\"],\n  \"maxCrawledPlacesPerSearch\": {{ $json.maxResultadosPorBusqueda }},\n  \"language\": \"es\",\n  \"countryCode\": \"co\",\n  \"skipClosedPlaces\": true\n}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1520,
+        -16
+      ],
+      "id": "1bf6fa32-70f8-4299-a03f-a320090f14aa",
+      "name": "Scrapear Google Maps (Apify)"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst ciudad = $('Elegir Ciudad del Día').first().json.ciudad;\nconst prospectosAptos = [];\nconst telefonosProcesados = new Set();\n\nfor (const item of items) {\n  const data = item.json;\n  const rawPhone = data.phone || data.phoneNumber || '';\n  let cleanPhone = rawPhone.replace(/[^0-9]/g, '');\n\n  // Normalizar número de Colombia\n  if (cleanPhone.length === 10 && cleanPhone.startsWith('3')) {\n    cleanPhone = `57${cleanPhone}`;\n  } else if (cleanPhone.startsWith('57') && cleanPhone.length === 12 && cleanPhone.slice(2).startsWith('3')) {\n    // Ya tiene prefijo 57 y es móvil\n  } else {\n    // Es fijo o no es un móvil válido de Colombia, se descarta\n    continue;\n  }\n\n  // Descartar duplicados dentro de la misma lista de resultados\n  if (telefonosProcesados.has(cleanPhone)) continue;\n  telefonosProcesados.add(cleanPhone);\n\n  // Filtrar que NO tenga página web propia\n  const web = (data.website || '').toLowerCase().trim();\n  const esSinWebPropia = !web || web === '' || web.includes('facebook.com') || web.includes('instagram.com') || web.includes('business.site') || web.includes('tiktok.com');\n\n  if (esSinWebPropia) {\n    prospectosAptos.push({\n      barberiaNombre: data.title || data.name || 'Barbería',\n      telefono: cleanPhone,\n      ciudad: ciudad,\n      rating: data.totalScore || 0\n    });\n  }\n}\n\n// Enviamos un máximo de 15 a 20 prospectos al día para máxima seguridad del número\nreturn prospectosAptos.slice(0, 20);"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1744,
+        -16
+      ],
+      "id": "586736df-cc65-40b1-b8ad-44412a94f23b",
+      "name": "Filtrar: Celular Móvil + Sin Web"
+    },
+    {
+      "parameters": {
+        "options": {
+          "reset": false
+        }
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1952,
+        -16
+      ],
+      "id": "fea45c5e-c579-4a2a-9c4a-94ced48e20c8",
+      "name": "Procesar Uno a Uno"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const item = $input.item.json;\nconst nombre = item.barberiaNombre;\nconst ciudad = item.ciudad;\nconst telefono = item.telefono;\n\nconst texto = `Hola, buenas tardes 👋 Mi nombre es Brayan Muñoz, soy desarrollador de Asys Technology SAS.\n\nVimos que muchas barberías en *${ciudad}* (como *${nombre}*) todavía manejan las citas por WhatsApp o de forma manual, y queríamos contarte sobre un sistema que hicimos justo para eso.\n\n¿Te interesa que te cuente cómo funciona?\n\nEl sistema hace tres cosas principales:\n📅 *Agendamiento automático* — tus clientes reservan su cita solos, sin que tengas que estar pendiente del chat\n🔔 *Recordatorios automáticos por WhatsApp* — para que no te dejen plantado\n🔗 *Link personalizado con el logo de tu barbería* — tus clientes ven tu marca, no un sistema genérico\n\nSomos *Asys Technology SAS*, NIT 902089346, por si quieres verificarnos.\n\nTe dejamos *14 días de prueba gratis*, sin compromiso y sin necesidad de tarjeta en: https://app.asysdigital.com/login/asysbarber\n\nCualquier duda me escribes por aquí sin problema 🙌`;\n\nreturn {\n  number: telefono,\n  text: texto,\n  barberia: nombre\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2176,
+        -16
+      ],
+      "id": "642a0058-b2eb-453b-8e62-52076500f1c2",
+      "name": "Armar Mensaje Persuasivo"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://evolution.asysdigital.com/message/sendText/asys-barber",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "AsysClaveSuperSecreta2026"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "={{ $json.number }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ $json.text }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2400,
+        -16
+      ],
+      "id": "6dcbda6e-7217-4c5d-9948-edadc68a1e85",
+      "name": "Enviar WhatsApp (Evolution API)",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "amount": "={{ Math.floor(Math.random() * (45 - 25 + 1)) + 25 }}"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2624,
+        -16
+      ],
+      "id": "789d02f5-09a1-4166-aede-c06f06fd8bd4",
+      "name": "Pausa Anti-Spam (25-45 seg)",
+      "webhookId": "30534555-94fe-46eb-837b-0575c2b173b6"
+    }
+  ],
+  "pinData": {
+    "Disparador Diario (9:30 AM Col)": [
+      {
+        "json": {
+          "timestamp": "2026-09-23T09:30:00.032-04:00",
+          "Readable date": "September 23rd 2026, 9:30:00 am",
+          "Readable time": "9:30:00 am",
+          "Day of week": "Wednesday",
+          "Year": "2026",
+          "Month": "September",
+          "Day of month": "23",
+          "Hour": "09",
+          "Minute": "30",
+          "Second": "00",
+          "Timezone": "America/New_York (UTC-04:00)"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Disparador Diario (9:30 AM Col)": {
+      "main": [
+        [
+          {
+            "node": "Elegir Ciudad del Día",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Elegir Ciudad del Día": {
+      "main": [
+        [
+          {
+            "node": "Scrapear Google Maps (Apify)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Scrapear Google Maps (Apify)": {
+      "main": [
+        [
+          {
+            "node": "Filtrar: Celular Móvil + Sin Web",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filtrar: Celular Móvil + Sin Web": {
+      "main": [
+        [
+          {
+            "node": "Procesar Uno a Uno",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Procesar Uno a Uno": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Armar Mensaje Persuasivo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Armar Mensaje Persuasivo": {
+      "main": [
+        [
+          {
+            "node": "Enviar WhatsApp (Evolution API)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar WhatsApp (Evolution API)": {
+      "main": [
+        [
+          {
+            "node": "Pausa Anti-Spam (25-45 seg)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pausa Anti-Spam (25-45 seg)": {
+      "main": [
+        [
+          {
+            "node": "Procesar Uno a Uno",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "c1a66b0a-faf4-4071-9116-d80f1dc6bdb8",
+  "meta": {
+    "instanceId": "e8ac31d0761f0fac068014fb3519894d3ce242d3d855987f52653f0ae88d6986"
+  },
+  "nodeGroups": [],
+  "id": "rLXDv1cBkqXNQRit",
+  "tags": []
+}

@@ -1,0 +1,517 @@
+{
+  "name": "n8nv2",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "abb48ea7-9b9f-404a-b668-75963bf65228",
+      "name": "Test Manual Short",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1024,
+        1488
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9,12,16,19,22 * * *"
+            }
+          ]
+        }
+      },
+      "id": "aa87c324-bbf0-47d4-968b-9abd7cff9ff3",
+      "name": "5 Shorts Diarios",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1024,
+        1664
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const staticData = $getWorkflowStaticData('global');\n\nconst subcategorias = [\n  { cat: 'Cine Geek', pauta: 'Marvel MCU, Harry Potter, Star Wars o Animes famosos (Dragon Ball, Naruto, One Piece). Pregunta por un dato que solo los verdaderos fans conocen.' },\n  { cat: 'Fútbol Élite', pauta: 'Champions League, Mundiales, Balón de Oro, récords históricos de Messi, Cristiano Ronaldo, Pelé o Maradona.' },\n  { cat: 'Cultura General', pauta: 'Preguntas trampa que el 90% responde mal creyendo que es fácil. Récords Guinness, inventores o datos asombrosos del cuerpo humano.' },\n  { cat: 'Historia Antigua', pauta: 'El Imperio Romano, gladiadores, mitología griega o civilizaciones perdidas. Pregunta por hechos reales poco conocidos.' },\n  { cat: 'Ciencia y Espacio', pauta: 'Agujeros negros, el Sistema Solar, qué pasaría si la Tierra se detiene o misterios de las profundidades del océano.' },\n  { cat: 'Geografía del Mundo', pauta: 'Capitales engañosas, países con fronteras curiosas, banderas parecidas o lugares extremos del planeta.' },\n  { cat: 'Animales Extremos', pauta: 'Los animales más venenosos, criaturas prehistóricas, récords de fuerza o velocidad en el reino animal.' },\n  { cat: 'Curiosidades del Mundo', pauta: 'Leyes absurdas de otros países, inventos por accidente o misterios históricos comprobados.' }\n];\n\nif (typeof staticData.subIdx === 'undefined') staticData.subIdx = 0;\n\nconst actual = subcategorias[staticData.subIdx];\nstaticData.subIdx = (staticData.subIdx + 1) % subcategorias.length;\n\nreturn [{\n  json: {\n    categoria: actual.cat,\n    pauta: actual.pauta,\n    semilla: Math.floor(Math.random() * 10000)\n  }\n}];"
+      },
+      "id": "c7bfd388-708b-4064-acf6-edba1fce7263",
+      "name": "Rotar Categoria Short",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -800,
+        1584
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer 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"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"openai/gpt-oss-20b\",\n  \"reasoning_effort\": \"low\",\n  \"max_completion_tokens\": 4096,\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"Eres guionista experto de trivias virales. Responde ÚNICAMENTE un JSON puro con esta estructura:\\n{\\n  \\\"hook_text\\\": \\\"Reto corto de 2 seg sin repetir la pregunta (ej: ¡El 90% se equivoca en esta!)\\\",\\n  \\\"question\\\": \\\"pregunta directa máx 8 palabras\\\",\\n  \\\"options\\\": [\\\"A) op1\\\", \\\"B) op2\\\", \\\"C) op3\\\", \\\"D) op4\\\"],\\n  \\\"correct_idx\\\": 0,\\n  \\\"fun_fact\\\": \\\"Dato curioso verídico de 1 línea\\\",\\n  \\\"title\\\": \\\"Título llamativo con emojis #Shorts #Trivia\\\",\\n  \\\"description\\\": \\\"Llamada a comentar 👇 + 8 hashtags\\\"\\n}\\n\\nREGLAS OBLIGATORIAS:\\n1. Las 4 opciones DEBEN SER OBLIGATORIAMENTE DISTINTAS entre sí. Jamás repitas la misma respuesta en más de una opción.\\n2. Las opciones deben ser cortas (máx 3 palabras cada una).\\n3. Datos 100% verídicos y actuales.\\n4. hook_text NO puede ser idéntico a la pregunta.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"CATEGORÍA: {{ $json.categoria }}. PAUTAS: {{ $json.pauta }}. SEMILLA: {{ $json.semilla }}\"\n    }\n  ],\n  \"temperature\": 0.7\n}",
+        "options": {}
+      },
+      "id": "e00b4d36-5746-4be5-a030-b9d0ca622d10",
+      "name": "Groq IA (Crear Short)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -576,
+        1584
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const msg = $json.choices[0].message;\nconst raw = msg.content || msg.reasoning || '';\nconst match = raw.match(/\\{[\\s\\S]*\\}/);\nif (!match) throw new Error('No se encontró JSON: ' + raw);\nconst data = JSON.parse(match[0]);\ndata.category = $('Rotar Categoria Short').item.json.categoria;\nreturn { json: data };"
+      },
+      "id": "f40305b4-90e8-43e6-a28c-d0b800898b1f",
+      "name": "Extraer Datos Short",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -352,
+        1584
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://n8n-vi:8000/render",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"category\": \"{{ $json.category }}\",\n  \"question\": \"{{ $json.question }}\",\n  \"options\": {{ JSON.stringify($json.options) }},\n  \"correct_idx\": {{ $json.correct_idx }},\n  \"hook_text\": \"{{ $json.hook_text }}\",\n  \"fun_fact\": \"{{ $json.fun_fact }}\"\n}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "id": "531cdc55-ef66-402e-8bda-13d5a32310d5",
+      "name": "Renderizar Short Pro",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -144,
+        1584
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "video",
+        "operation": "upload",
+        "title": "={{ $('Extraer Datos Short').item.json.title }}",
+        "regionCode": "CO",
+        "categoryId": "24",
+        "options": {
+          "description": "={{ $('Extraer Datos Short').item.json.description }}"
+        }
+      },
+      "id": "435a307c-813b-404a-805d-81f7691125c3",
+      "name": "Publicar Short YouTube",
+      "type": "n8n-nodes-base.youTube",
+      "typeVersion": 1,
+      "position": [
+        112,
+        1600
+      ],
+      "credentials": {
+        "youTubeOAuth2Api": {
+          "id": "2W2StHQrD0aunLlA",
+          "name": "YouTube account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://www.googleapis.com/youtube/v3/commentThreads?part=snippet",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "youTubeOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"snippet\": {\n    \"videoId\": \"{{ $json.uploadId || $json.id }}\",\n    \"topLevelComment\": {\n      \"snippet\": {\n        \"textOriginal\": \"¿Acertaste o caíste en la trampa? 👇🧠\\n\\n🔥 OFERTA FLASH DE AMAZON (Tiempo limitado):\\nConsigue 3 meses de Audible por solo $0.99 + $20 USD de crédito de regalo para escuchar Hábitos Atómicos y miles de audiolibros:\\n👉 [Enlace en nuestro perfil @TriviFlash] 🔗\\n(Promoción oficial directa en Amazon #Afiliado)\"\n      }\n    }\n  }\n}",
+        "options": {}
+      },
+      "id": "12607e92-2f24-420b-aa5c-ed636d816b94",
+      "name": "Auto-Comentar Short",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        336,
+        1584
+      ],
+      "credentials": {
+        "youTubeOAuth2Api": {
+          "id": "2W2StHQrD0aunLlA",
+          "name": "YouTube account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "sendVideo",
+        "chatId": "8713555342",
+        "binaryData": true,
+        "additionalFields": {
+          "caption": "={{ $('Extraer Datos Short').item.json.title }}\n\n{{ $('Extraer Datos Short').item.json.description }}\n\n#TriviaFlash #Shorts #TikTok"
+        }
+      },
+      "id": "debce113-00ed-486c-b8f6-f376b1cdd93c",
+      "name": "Telegram Short",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        96,
+        1424
+      ],
+      "webhookId": "245982df-87d7-412e-a018-b0059b3b43d0",
+      "credentials": {
+        "telegramApi": {
+          "id": "OOW3kmHjTmXKXxtU",
+          "name": "Telegram account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 2 * * *"
+            }
+          ]
+        }
+      },
+      "id": "36850fc6-00d0-48fe-becc-f6291efe2deb",
+      "name": "Diario 02:00 AM (Madrugada)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1024,
+        2064
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const staticData = $getWorkflowStaticData('global');\nconst tematicas = [\n  'Marvel Cinematic Universe',\n  'Fútbol Champions League y Mundiales',\n  'Cultura General Extrema',\n  'Harry Potter y Star Wars',\n  'Historia Antigua (Misterios y Egipto)'\n];\nif (typeof staticData.lIdx === 'undefined') staticData.lIdx = 0;\nconst tema = tematicas[staticData.lIdx];\nstaticData.lIdx = (staticData.lIdx + 1) % tematicas.length;\nreturn [{ json: { tema: tema } }];"
+      },
+      "id": "c0a3df8d-200c-4b0f-818e-806e52c7ec53",
+      "name": "Rotar Tema Diario (Largo)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -800,
+        1984
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer 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"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"openai/gpt-oss-20b\",\n  \"reasoning_effort\": \"low\",\n  \"max_completion_tokens\": 4096,\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"Eres guionista senior de documentales de misterio y ciencia extrema estilo History Channel. Devuelve ÚNICAMENTE un JSON puro con esta estructura exacta:\\n{\\n  \\\"main_title\\\": \\\"Título impactante del documental\\\",\\n  \\\"theme\\\": \\\"Misterios del Mundo\\\",\\n  \\\"title\\\": \\\"¿Qué oculta la historia? 5 Misterios Inexplicables #Documental\\\",\\n  \\\"description\\\": \\\"Investigación completa. Déjanos tu teoría en los comentarios 👇\\\\n\\\\nPromoción oficial de Amazon en la descripción.\\\\n\\\\n#Misterios #Ciencia #Documental #TriviaFlash\\\",\\n  \\\"scenes\\\": [\\n    {\\n      \\\"tag\\\": \\\"ENIGMA 1\\\",\\n      \\\"title\\\": \\\"El Evento Tunguska de 1908\\\",\\n      \\\"headline\\\": \\\"Una explosión equivalente a 185 bombas atómicas sin cráter\\\",\\n      \\\"narration\\\": \\\"En 1908, una gigantesca explosión en Siberia derribó 80 millones de árboles en segundos. La fuerza fue equivalente a 185 bombas de Hiroshima, pero jamás se encontró ningún cráter de meteorito. Hasta hoy, nadie sabe qué impactó la Tierra.\\\"\\n    }\\n  ]\\n}\\n\\nREGLA: Genera EXACTAMENTE 6 escenas intrigantes sobre el tema del día. Cada narración debe durar entre 20 y 30 palabras con tono misterioso y reflexivo.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"TEMA DE HOY: {{ $json.tema }}\"\n    }\n  ],\n  \"temperature\": 0.5\n}",
+        "options": {}
+      },
+      "id": "d7d96b4f-22bd-43ab-b438-3192c10b09b2",
+      "name": "Groq IA (Crear Maratón 10Q)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -576,
+        1984
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const msg = $json.choices[0].message;\nconst raw = msg.content || msg.reasoning || '';\nconst match = raw.match(/\\{[\\s\\S]*\\}/);\nif (!match) throw new Error('No se encontró JSON: ' + raw);\nconst data = JSON.parse(match[0]);\ndata.theme = $('Rotar Tema Diario (Largo)').item.json.tema;\nreturn { json: data };"
+      },
+      "id": "fb46331f-be9c-4d23-a8fd-02ae3019a610",
+      "name": "Extraer Datos Largo",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -352,
+        1984
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://n8n-vi:8000/render-long",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"theme\": \"{{ $json.theme }}\",\n  \"hook\": \"{{ $json.hook }}\",\n  \"questions\": {{ JSON.stringify($json.questions) }}\n}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "id": "128ff625-4686-4b86-826b-79e5d923ba50",
+      "name": "Renderizar Video Largo",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -144,
+        1984
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "video",
+        "operation": "upload",
+        "title": "={{ $('Extraer Datos Largo').item.json.title }}",
+        "regionCode": "CO",
+        "categoryId": "24",
+        "options": {
+          "description": "={{ $('Extraer Datos Largo').item.json.description }}"
+        }
+      },
+      "id": "fc45bf53-c1c8-4155-b9df-ce367b4927d4",
+      "name": "Publicar Video Largo YouTube",
+      "type": "n8n-nodes-base.youTube",
+      "typeVersion": 1,
+      "position": [
+        96,
+        1984
+      ],
+      "credentials": {
+        "youTubeOAuth2Api": {
+          "id": "2W2StHQrD0aunLlA",
+          "name": "YouTube account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://www.googleapis.com/youtube/v3/commentThreads?part=snippet",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "youTubeOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"snippet\": {\n    \"videoId\": \"{{ $json.uploadId || $json.id }}\",\n    \"topLevelComment\": {\n      \"snippet\": {\n        \"textOriginal\": \"¿Acertaste o caíste en la trampa? 👇🧠\\n\\n🔥 OFERTA FLASH DE AMAZON (Tiempo limitado):\\nConsigue 3 meses de Audible por solo $0.99 + $20 USD de crédito de regalo para escuchar Hábitos Atómicos y miles de audiolibros:\\n👉 [Enlace en nuestro perfil @TriviFlash] 🔗\\n(Promoción oficial directa en Amazon #Afiliado)\"\n      }\n    }\n  }\n}",
+        "options": {}
+      },
+      "id": "c7b800ed-22a5-4477-ad1c-b9150c390b4c",
+      "name": "Auto-Comentar Largo",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        336,
+        1984
+      ],
+      "credentials": {
+        "youTubeOAuth2Api": {
+          "id": "2W2StHQrD0aunLlA",
+          "name": "YouTube account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Test Manual Short": {
+      "main": [
+        [
+          {
+            "node": "Rotar Categoria Short",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "5 Shorts Diarios": {
+      "main": [
+        [
+          {
+            "node": "Rotar Categoria Short",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rotar Categoria Short": {
+      "main": [
+        [
+          {
+            "node": "Groq IA (Crear Short)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq IA (Crear Short)": {
+      "main": [
+        [
+          {
+            "node": "Extraer Datos Short",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extraer Datos Short": {
+      "main": [
+        [
+          {
+            "node": "Renderizar Short Pro",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Renderizar Short Pro": {
+      "main": [
+        [
+          {
+            "node": "Telegram Short",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Publicar Short YouTube",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Publicar Short YouTube": {
+      "main": [
+        [
+          {
+            "node": "Auto-Comentar Short",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Diario 02:00 AM (Madrugada)": {
+      "main": [
+        [
+          {
+            "node": "Rotar Tema Diario (Largo)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rotar Tema Diario (Largo)": {
+      "main": [
+        [
+          {
+            "node": "Groq IA (Crear Maratón 10Q)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq IA (Crear Maratón 10Q)": {
+      "main": [
+        [
+          {
+            "node": "Extraer Datos Largo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extraer Datos Largo": {
+      "main": [
+        [
+          {
+            "node": "Renderizar Video Largo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Renderizar Video Largo": {
+      "main": [
+        [
+          {
+            "node": "Publicar Video Largo YouTube",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Publicar Video Largo YouTube": {
+      "main": [
+        [
+          {
+            "node": "Auto-Comentar Largo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "ed528586-b071-4014-b247-d48a285946a7",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e8ac31d0761f0fac068014fb3519894d3ce242d3d855987f52653f0ae88d6986"
+  },
+  "nodeGroups": [],
+  "id": "vj5ON1xfAjuwxyBw",
+  "tags": []
+}

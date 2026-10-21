@@ -1,0 +1,258 @@
+{
+  "name": "n8nv2",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "b9425d3c-44d3-4a8d-a352-acbf866c0e71",
+      "name": "Ejecutar Manualmente",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -800,
+        64
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const staticData = $getWorkflowStaticData('global');\n\nconst categorias = [\n  {\n    id: 'cultura_general',\n    nombre: 'Cultura General',\n    instrucciones: 'Preguntas trampa que el 90% falla. Apela al ego: ¿Podrás responderla? Geografía, ciencia o récords.'\n  },\n  {\n    id: 'cine_series',\n    nombre: 'Cine y Series',\n    instrucciones: 'Datos épicos de Marvel, Harry Potter, Star Wars o Animes famosos (Dragon Ball, One Piece).'\n  },\n  {\n    id: 'futbol',\n    nombre: 'Fútbol Mundial',\n    instrucciones: 'Mundiales, Champions League, Messi, Cristiano Ronaldo, récords y finales históricas.'\n  },\n  {\n    id: 'historia_misterio',\n    nombre: 'Historia y Misterio',\n    instrucciones: 'Curiosidades del Antiguo Egipto, Roma, misterios o civilizaciones perdidas.'\n  },\n  {\n    id: 'ciencia_espacio',\n    nombre: 'Ciencia y Espacio',\n    instrucciones: 'Agujeros negros, el universo, fenómenos extremos o curiosidades del cuerpo humano.'\n  }\n];\n\nif (typeof staticData.catIdx === 'undefined') {\n  staticData.catIdx = 0;\n}\n\nconst index = staticData.catIdx;\nconst actual = categorias[index];\nstaticData.catIdx = (index + 1) % categorias.length;\n\nreturn {\n  json: {\n    category: actual.id,\n    tema_nombre: actual.nombre,\n    instrucciones: actual.instrucciones\n  }\n};"
+      },
+      "id": "d64c3ebb-4490-403c-b528-afbc83b6625b",
+      "name": "Rotar Categorias",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -576,
+        144
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer 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"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"openai/gpt-oss-20b\",\n  \"reasoning_effort\": \"low\",\n  \"max_completion_tokens\": 4096,\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"Eres un estratega experto en viralidad y SEO para YouTube Shorts, Reels y TikTok. Tu objetivo es maximizar retención y comentarios.\\n\\nGenera un JSON con esta estructura exacta:\\n{\\n  \\\"hook_text\\\": \\\"frase gancho de 2 segundos que rete al espectador\\\",\\n  \\\"question\\\": \\\"pregunta directa máx 9 palabras\\\",\\n  \\\"options\\\": [\\\"A) corta\\\", \\\"B) corta\\\", \\\"C) corta\\\", \\\"D) corta\\\"],\\n  \\\"correct_idx\\\": 0,\\n  \\\"title\\\": \\\"Título con gancho psicológico o reto de ego + 2 emojis + #Shorts #Trivia\\\",\\n  \\\"description\\\": \\\"Pregunta desafiante + ¿Pudiste responderla? Comenta tu resultado abajo 👇 + mínimo 8 hashtags de alto volumen\\\"\\n}\\n\\nEJEMPLO DE TÍTULO: '¿El 95% falla esta pregunta de primaria? 🧠🤯 #Shorts #Trivia'\\nEJEMPLO DE DESCRIPCIÓN: 'Pon a prueba tu mente con este reto rápido. ¿Acertaste o caíste en la trampa? Déjamelo saber en los comentarios 👇\\\\n\\\\n#Trivia #Quiz #CulturaGeneral #RetoMental #AprendeConmigo #DatosCuriosos #PreguntasYRespuestas #DesafioMental #Shorts #Viral'\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"CATEGORÍA: {{ $json.tema_nombre }}. DETALLES: {{ $json.instrucciones }}. Genera el JSON viral ahora:\"\n    }\n  ],\n  \"temperature\": 0.4\n}",
+        "options": {}
+      },
+      "id": "0ded4027-9d9c-4de1-a715-ce4d03ca13ff",
+      "name": "Groq IA (Generar Trivia)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -352,
+        144
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const msg = $json.choices[0].message;\nconst raw = msg.content || msg.reasoning || '';\nconst match = raw.match(/\\{[\\s\\S]*\\}/);\n\nif (!match) {\n  throw new Error('No se encontró JSON válido en Groq: ' + raw);\n}\n\nconst data = JSON.parse(match[0]);\ndata.category = $('Rotar Categorias').item.json.category;\nreturn { json: data };"
+      },
+      "id": "8ce617c4-da07-406d-ba35-f9090891fcec",
+      "name": "Extraer Datos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -128,
+        144
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://n8n-vi:8000/render",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"category\": \"{{ $json.category }}\",\n  \"question\": \"{{ $json.question }}\",\n  \"options\": {{ JSON.stringify($json.options) }},\n  \"correct_idx\": {{ $json.correct_idx }},\n  \"hook_text\": \"{{ $json.hook_text }}\"\n}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "id": "7e1bc23d-cc36-4b66-8191-f780145ac93c",
+      "name": "Renderizar Video Pro",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        96,
+        144
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "video",
+        "operation": "upload",
+        "title": "={{ $('Extraer Datos').item.json.title }}",
+        "regionCode": "CO",
+        "categoryId": "24",
+        "options": {
+          "description": "={{ $('Extraer Datos').item.json.description }}"
+        }
+      },
+      "id": "0b32915e-0922-4ec1-96bc-7b6b74b3211f",
+      "name": "Publicar en YouTube Shorts",
+      "type": "n8n-nodes-base.youTube",
+      "typeVersion": 1,
+      "position": [
+        368,
+        144
+      ],
+      "credentials": {
+        "youTubeOAuth2Api": {
+          "id": "2W2StHQrD0aunLlA",
+          "name": "YouTube account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 4
+            }
+          ]
+        }
+      },
+      "id": "8036f104-07d7-4cd7-acaa-a304db1e8fe9",
+      "name": "Cada 4 Horas",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -800,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "sendVideo",
+        "chatId": "8713555342",
+        "binaryData": true,
+        "additionalFields": {
+          "caption": "={{ $('Extraer Datos').item.json.title }}\n\n{{ $('Extraer Datos').item.json.description }}\n\n#Trivia #Viral #TikTok #Shorts"
+        }
+      },
+      "id": "5807ccd2-a6d1-4838-88b0-dd251dc14962",
+      "name": "Enviar a Telegram (Para TikTok)",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        368,
+        -48
+      ],
+      "webhookId": "5233eb8b-5fa3-4c54-b907-c002be316bf2",
+      "credentials": {
+        "telegramApi": {
+          "id": "OOW3kmHjTmXKXxtU",
+          "name": "Telegram account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Ejecutar Manualmente": {
+      "main": [
+        [
+          {
+            "node": "Rotar Categorias",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rotar Categorias": {
+      "main": [
+        [
+          {
+            "node": "Groq IA (Generar Trivia)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq IA (Generar Trivia)": {
+      "main": [
+        [
+          {
+            "node": "Extraer Datos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extraer Datos": {
+      "main": [
+        [
+          {
+            "node": "Renderizar Video Pro",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Renderizar Video Pro": {
+      "main": [
+        [
+          {
+            "node": "Publicar en YouTube Shorts",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Enviar a Telegram (Para TikTok)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cada 4 Horas": {
+      "main": [
+        [
+          {
+            "node": "Rotar Categorias",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "a4dcaf5c-f509-40f8-9602-e6b56bc499ad",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e8ac31d0761f0fac068014fb3519894d3ce242d3d855987f52653f0ae88d6986"
+  },
+  "nodeGroups": [],
+  "id": "vIvHG9YnMSSy7KfV",
+  "tags": []
+}

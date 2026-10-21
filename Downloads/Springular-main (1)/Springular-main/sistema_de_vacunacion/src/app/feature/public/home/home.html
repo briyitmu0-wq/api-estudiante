@@ -1,0 +1,46 @@
+<!-- home.html -->
+<div class="page-content">
+  <app-public-header></app-public-header>
+
+  <main class="hero">
+    <section class="hero-texto">
+    <span class="badge">SITIO OFICIAL</span>
+    <h1>
+      Consulta y descarga tu
+      <span class="destacado">Certificado de vacunación</span>
+    </h1>
+    <p class="descripcion">
+      La plataforma nacional unificada para gestionar tu historial de salud.
+      Consulta esquemas PAI y COVID-19 con validación oficial del Ministerio.
+    </p>
+    <button class="btn-consultar" (click)="irAConsultarCertificado()">
+  <i class="bi bi-search"></i>Consultar Certificado
+</button>
+  </section>
+
+  <!-- home.html actualizado, sección hero-tarjeta -->
+<section class="hero-tarjeta">
+  <div class="tarjeta-plataforma">
+    <div class="icono-escudo">
+      <i class="bi bi-shield-fill-check"></i>
+    </div>
+    <h3>Plataforma Segura</h3>
+    <ul class="lista-seguridad">
+      <li>
+        <i class="bi bi-lock-fill"></i>
+        Datos encriptados AES-256
+      </li>
+      <li>
+        <i class="bi bi-person-check-fill"></i>
+        Verificación de identidad
+      </li>
+      <li>
+        <i class="bi bi-building-fill-lock"></i>
+        Respaldo gubernamental
+      </li>
+    </ul>
+  </div>
+</section>
+</main>
+
+<app-public-footer></app-public-footer>

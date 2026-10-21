@@ -1,0 +1,517 @@
+{
+  "name": "n8nvv2",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "83e78adc-c4e6-4019-ada9-9974f71ecd2f",
+      "name": "Test Manual Short",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -256,
+        1312
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8,11,15,18,21 * * *"
+            }
+          ]
+        }
+      },
+      "id": "0cd33f65-80de-4508-897c-32a9ef69617c",
+      "name": "5 Shorts Diarios",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -256,
+        1488
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const staticData = $getWorkflowStaticData('global');\nconst cats = ['Fútbol Mundial', 'Cine y Series', 'Cultura General', 'Historia y Misterio', 'Ciencia y Espacio'];\nif (typeof staticData.sIdx === 'undefined') staticData.sIdx = 0;\nconst cat = cats[staticData.sIdx];\nstaticData.sIdx = (staticData.sIdx + 1) % cats.length;\nreturn [{ json: { categoria: cat } }];"
+      },
+      "id": "9a3f01da-deec-493a-b9e2-75a7fd745114",
+      "name": "Rotar Categoria Short",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -32,
+        1408
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer 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"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"openai/gpt-oss-20b\",\n  \"reasoning_effort\": \"low\",\n  \"max_completion_tokens\": 4096,\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"Eres guionista de trivias. Responde ÚNICAMENTE un JSON puro:\\n{\\n  \\\"hook_text\\\": \\\"Reto corto de 2 seg sin repetir la pregunta (ej: ¡A ver si sabes esta!)\\\",\\n  \\\"question\\\": \\\"pregunta directa máx 8 palabras\\\",\\n  \\\"options\\\": [\\\"A) corta\\\", \\\"B) corta\\\", \\\"C) corta\\\", \\\"D) corta\\\"],\\n  \\\"correct_idx\\\": 0,\\n  \\\"fun_fact\\\": \\\"Dato curioso verídico de 1 línea sobre la respuesta\\\",\\n  \\\"title\\\": \\\"Título reto + emojis #Shorts #Trivia\\\",\\n  \\\"description\\\": \\\"Pregunta + llamada a comentar 👇 + 8 hashtags\\\"\\n}\\nREGLAS: 4 opciones cortas (máx 3 palabras). Datos 100% verídicos y actuales.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"CATEGORÍA: {{ $json.categoria }}\"\n    }\n  ],\n  \"temperature\": 0.3\n}",
+        "options": {}
+      },
+      "id": "730b8493-65f8-486b-a298-d5602224c218",
+      "name": "Groq IA (Crear Short)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        192,
+        1408
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const msg = $json.choices[0].message;\nconst raw = msg.content || msg.reasoning || '';\nconst match = raw.match(/\\{[\\s\\S]*\\}/);\nif (!match) throw new Error('No se encontró JSON: ' + raw);\nconst data = JSON.parse(match[0]);\ndata.category = $('Rotar Categoria Short').item.json.categoria;\nreturn { json: data };"
+      },
+      "id": "489cbf9e-6e44-4335-a209-1b4f9fb90212",
+      "name": "Extraer Datos Short",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        416,
+        1408
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://n8n-vi:8000/render",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"category\": \"{{ $json.category }}\",\n  \"question\": \"{{ $json.question }}\",\n  \"options\": {{ JSON.stringify($json.options) }},\n  \"correct_idx\": {{ $json.correct_idx }},\n  \"hook_text\": \"{{ $json.hook_text }}\",\n  \"fun_fact\": \"{{ $json.fun_fact }}\"\n}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "id": "3636a18e-3486-4ae2-8ebc-e1acb3eaed77",
+      "name": "Renderizar Short Pro",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        624,
+        1408
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "video",
+        "operation": "upload",
+        "title": "={{ $('Extraer Datos Short').item.json.title }}",
+        "regionCode": "CO",
+        "categoryId": "24",
+        "options": {
+          "description": "={{ $('Extraer Datos Short').item.json.description }}"
+        }
+      },
+      "id": "d7f80b35-affd-43d4-8fa4-46d6206ba7be",
+      "name": "Publicar Short YouTube",
+      "type": "n8n-nodes-base.youTube",
+      "typeVersion": 1,
+      "position": [
+        880,
+        1424
+      ],
+      "credentials": {
+        "youTubeOAuth2Api": {
+          "id": "2W2StHQrD0aunLlA",
+          "name": "YouTube account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://www.googleapis.com/youtube/v3/commentThreads?part=snippet",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "youTubeOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"snippet\": {\n    \"videoId\": \"{{ $json.uploadId || $json.id }}\",\n    \"topLevelComment\": {\n      \"snippet\": {\n        \"textOriginal\": \"¿Acertaste o caíste en la trampa? 👇🧠\n🔥 OFERTA FLASH DE AMAZON (Tiempo limitado):\nConsigue 3 meses de Audible por solo $0.99 + $20 USD de crédito de regalo para escuchar Hábitos Atómicos y miles de audiolibros:\n👉 [Enlace en nuestro perfil @TriviFlash] 🔗\n(Promoción oficial directa en Amazon #Afiliado)\"\n      }\n    }\n  }\n}",
+        "options": {}
+      },
+      "id": "cbb72811-f30d-4dca-815b-9223e4748680",
+      "name": "Auto-Comentar Short",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1104,
+        1408
+      ],
+      "credentials": {
+        "youTubeOAuth2Api": {
+          "id": "2W2StHQrD0aunLlA",
+          "name": "YouTube account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "sendVideo",
+        "chatId": "8713555342",
+        "binaryData": true,
+        "additionalFields": {
+          "caption": "={{ $('Extraer Datos Short').item.json.title }}\n\n{{ $('Extraer Datos Short').item.json.description }}\n\n#TriviaFlash #Shorts #TikTok"
+        }
+      },
+      "id": "c3d229c5-1003-4c38-95e8-a93747db07fe",
+      "name": "Telegram Short",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        864,
+        1248
+      ],
+      "webhookId": "2ede9c4d-0587-43dd-b32c-01c9c9c29095",
+      "credentials": {
+        "telegramApi": {
+          "id": "OOW3kmHjTmXKXxtU",
+          "name": "Telegram account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 2 * * *"
+            }
+          ]
+        }
+      },
+      "id": "e1b10c31-daff-4d2a-b1bd-bf4cd503ce8c",
+      "name": "Diario 02:00 AM (Madrugada)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -256,
+        1888
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const staticData = $getWorkflowStaticData('global');\nconst tematicas = [\n  'Marvel Cinematic Universe',\n  'Fútbol Champions League y Mundiales',\n  'Cultura General Extrema',\n  'Harry Potter y Star Wars',\n  'Historia Antigua (Misterios y Egipto)'\n];\nif (typeof staticData.lIdx === 'undefined') staticData.lIdx = 0;\nconst tema = tematicas[staticData.lIdx];\nstaticData.lIdx = (staticData.lIdx + 1) % tematicas.length;\nreturn [{ json: { tema: tema } }];"
+      },
+      "id": "97d1f0bb-ec58-4bfc-9224-bfd8c6dcf218",
+      "name": "Rotar Tema Diario (Largo)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -32,
+        1808
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer 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"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"openai/gpt-oss-20b\",\n  \"reasoning_effort\": \"low\",\n  \"max_completion_tokens\": 4096,\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"Eres productor de trivias de YouTube. Responde ÚNICAMENTE un JSON puro con:\\n{\\n  \\\"theme\\\": \\\"Nombre corto\\\",\\n  \\\"hook\\\": \\\"Hoy pondremos a prueba tu mente en 10 preguntas de nivel fácil a imposible\\\",\\n  \\\"title\\\": \\\"¿Podrás con el Nivel Imposible? 🔥 10 Preguntas de Test\\\",\\n  \\\"description\\\": \\\"Desafío completo. Deja tu resultado en los comentarios 👇\\\\n\\\\n#Trivia #Quiz #TriviaFlash\\\",\\n  \\\"questions\\\": [\\n    {\\n      \\\"level\\\": \\\"FÁCIL\\\",\\n      \\\"question\\\": \\\"pregunta máx 10 palabras\\\",\\n      \\\"options\\\": [\\\"A) op1\\\", \\\"B) op2\\\", \\\"C) op3\\\", \\\"D) op4\\\"],\\n      \\\"correct_idx\\\": 0,\\n      \\\"fun_fact\\\": \\\"Dato curioso verídico de 1 línea\\\"\\n    }\\n  ]\\n}.\\nReglas: EXACTAMENTE 10 preguntas (1-3: FÁCIL, 4-6: MEDIO, 7-9: DIFÍCIL, 10: IMPOSIBLE). Opciones cortas y datos 100% verídicos.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"TEMA: {{ $json.tema }}\"\n    }\n  ],\n  \"temperature\": 0.3\n}",
+        "options": {}
+      },
+      "id": "72fed45c-d0f0-4e96-b379-4a9ed4d99b8b",
+      "name": "Groq IA (Crear Maratón 10Q)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        192,
+        1808
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const msg = $json.choices[0].message;\nconst raw = msg.content || msg.reasoning || '';\nconst match = raw.match(/\\{[\\s\\S]*\\}/);\nif (!match) throw new Error('No se encontró JSON: ' + raw);\nconst data = JSON.parse(match[0]);\ndata.theme = $('Rotar Tema Diario (Largo)').item.json.tema;\nreturn { json: data };"
+      },
+      "id": "f2169e4b-d86e-4140-b433-0e2e1ca39b07",
+      "name": "Extraer Datos Largo",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        416,
+        1808
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://n8n-vi:8000/render-long",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"theme\": \"{{ $json.theme }}\",\n  \"hook\": \"{{ $json.hook }}\",\n  \"questions\": {{ JSON.stringify($json.questions) }}\n}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "id": "babb3096-fd35-4382-9c06-a64beb943822",
+      "name": "Renderizar Video Largo",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        624,
+        1808
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "video",
+        "operation": "upload",
+        "title": "={{ $('Extraer Datos Largo').item.json.title }}",
+        "regionCode": "CO",
+        "categoryId": "24",
+        "options": {
+          "description": "={{ $('Extraer Datos Largo').item.json.description }}"
+        }
+      },
+      "id": "469e6f8d-9ef9-432e-af58-c40847ff810a",
+      "name": "Publicar Video Largo YouTube",
+      "type": "n8n-nodes-base.youTube",
+      "typeVersion": 1,
+      "position": [
+        864,
+        1808
+      ],
+      "credentials": {
+        "youTubeOAuth2Api": {
+          "id": "2W2StHQrD0aunLlA",
+          "name": "YouTube account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://www.googleapis.com/youtube/v3/commentThreads?part=snippet",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "youTubeOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"snippet\": {\n    \"videoId\": \"{{ $json.id }}\",\n    \"topLevelComment\": {\n      \"snippet\": {\n        \"textOriginal\": \"🏆 ¿Cuál fue tu puntuación final? Comenta tu resultado abajo 👇 ¿Lograste superar la pregunta imposible? ¡Suscríbete para el test de mañana!\"\n      }\n    }\n  }\n}",
+        "options": {}
+      },
+      "id": "ad52d7fb-2c9a-454c-afc6-998ba9d6da62",
+      "name": "Auto-Comentar Largo",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1104,
+        1808
+      ],
+      "credentials": {
+        "youTubeOAuth2Api": {
+          "id": "2W2StHQrD0aunLlA",
+          "name": "YouTube account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Test Manual Short": {
+      "main": [
+        [
+          {
+            "node": "Rotar Categoria Short",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "5 Shorts Diarios": {
+      "main": [
+        [
+          {
+            "node": "Rotar Categoria Short",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rotar Categoria Short": {
+      "main": [
+        [
+          {
+            "node": "Groq IA (Crear Short)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq IA (Crear Short)": {
+      "main": [
+        [
+          {
+            "node": "Extraer Datos Short",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extraer Datos Short": {
+      "main": [
+        [
+          {
+            "node": "Renderizar Short Pro",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Renderizar Short Pro": {
+      "main": [
+        [
+          {
+            "node": "Telegram Short",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Publicar Short YouTube",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Publicar Short YouTube": {
+      "main": [
+        [
+          {
+            "node": "Auto-Comentar Short",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Diario 02:00 AM (Madrugada)": {
+      "main": [
+        [
+          {
+            "node": "Rotar Tema Diario (Largo)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rotar Tema Diario (Largo)": {
+      "main": [
+        [
+          {
+            "node": "Groq IA (Crear Maratón 10Q)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq IA (Crear Maratón 10Q)": {
+      "main": [
+        [
+          {
+            "node": "Extraer Datos Largo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extraer Datos Largo": {
+      "main": [
+        [
+          {
+            "node": "Renderizar Video Largo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Renderizar Video Largo": {
+      "main": [
+        [
+          {
+            "node": "Publicar Video Largo YouTube",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Publicar Video Largo YouTube": {
+      "main": [
+        [
+          {
+            "node": "Auto-Comentar Largo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "1c6f86e6-7cff-45c4-841f-46403f4c9719",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e8ac31d0761f0fac068014fb3519894d3ce242d3d855987f52653f0ae88d6986"
+  },
+  "nodeGroups": [],
+  "id": "vj5ON1xfAjuwxyBw",
+  "tags": []
+}

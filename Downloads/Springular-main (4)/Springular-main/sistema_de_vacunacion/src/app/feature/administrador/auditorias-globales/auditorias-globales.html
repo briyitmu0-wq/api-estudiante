@@ -1,0 +1,85 @@
+<!-- feature/administrador/auditorias-globales/auditorias-globales.html -->
+<section class="auditorias">
+  <h1>Auditorías globales</h1>
+  <p class="subtitulo">Consulta de acciones realizadas por todos los usuarios del sistema</p>
+
+  <div class="toolbar">
+    <div class="campo-busqueda">
+  <input
+    type="text"
+    placeholder="Buscar usuario o entidad"
+    (input)="buscar($any($event.target).value)"
+  />
+  <span ><i class="bi bi-search"></i></span>
+
+</div>
+    <select class="filtro-tipo" (change)="filtrarPorTipo($any($event.target).value)">
+      <option value="">Todas las acciones</option>
+      @for (opcion of opcionesTipoAuditoria; track opcion) {
+        <option [value]="opcion"> {{ formatearAccion(opcion) }}</option>
+      }
+    </select>
+    <select class="filtro-tipo" (change)="filtrarPorTabla($any($event.target).value)">
+      <option value="">Todas las entidades</option>
+      @for (tabla of opcionesTabla(); track tabla) {
+        <option [value]="tabla">{{ formatearTabla(tabla) }}</option>
+      }
+    </select>
+  </div>
+
+  @if (cargando()) {
+    <p class="estado-carga">Cargando auditorías...</p>
+  } @else {
+    <table class="tabla">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Usuario</th>
+          <th>Acción</th>
+          <th>Entidad afectada</th>
+          <th>Detalles</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (auditoria of auditoriasFiltradas(); track auditoria.idAuditoria) {
+          <tr>
+            <td>{{ formatearFecha(auditoria.fechaAccion) }}</td>
+            <td>{{ auditoria.nombreUsuario }} {{ auditoria.apellidoUsuario}}</td>
+            <td>
+              <span class="accion" [class.crear]= "auditoria.tipoAccion === 'CREAR' " [class.editar]= "auditoria.tipoAccion === 'EDITAR' " [class.eliminar]= "auditoria.tipoAccion === 'ELIMINAR' " [class.consultar]= "auditoria.tipoAccion === 'CONSULTAR' ">
+                  {{formatearAccion(auditoria.tipoAccion)}}
+              </span>
+            </td>
+            <td>{{formatearTabla(auditoria.tablaAfectada)}}</td>
+            <td>
+              @if (auditoria.datosAnteriores || auditoria.datosNuevos) {
+                    <details class="detalles">
+                      <summary> Ver cambios</summary>
+                      @if (auditoria.datosAnteriores) {
+                        <div class="cambio">
+                          <strong>Datos anteriores</strong>
+                          <pre>{{auditoria.datosAnteriores}}</pre>
+                        </div>
+                      }
+
+                      @if (auditoria.datosNuevos) {
+                        <div class="cambio">
+                          <strong>Datos nuevos</strong>
+                          <pre>{{auditoria.datosNuevos}}</pre>
+                        </div>
+                      }
+                    </details>
+                  }@else {
+                    <span class="sin-detalles">Sin detalles</span>
+                  }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    @if (!hayResultados()) {
+      <p class="sin-resultados">No se encontraron registros de auditoría.</p>
+    }
+  }
+</section>

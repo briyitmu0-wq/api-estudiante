@@ -1,0 +1,271 @@
+\---Backend
+    \---Delta
+        |   .gitattributes
+        |   .gitignore
+        |   mvnw
+        |   mvnw.cmd
+        |   pom.xml
+        |   
+        +---.mvn
+        |   \---wrapper
+        |           maven-wrapper.properties
+        |           
+        +---src
+        |   +---main
+        |   |   +---java
+        |   |   |   \---com
+        |   |   |       \---sistema_de_vacunacion
+        |   |   |           \---Delta
+        |   |   |               |   DeltaApplication.java
+        |   |   |               |   
+        |   |   |               +---auditoria
+        |   |   |               |   |   Auditoria.java
+        |   |   |               |   |   AuditoriaController.java
+        |   |   |               |   |   AuditoriaRepository.java
+        |   |   |               |   |   AuditoriaService.java
+        |   |   |               |   |   AuditoriaServiceImpl.java
+        |   |   |               |   |   
+        |   |   |               |   +---dto
+        |   |   |               |   |       AuditoriaDTO.java
+        |   |   |               |   |       
+        |   |   |               |   \---enums
+        |   |   |               |           TipoAccionAuditoria.java
+        |   |   |               |           
+        |   |   |               +---common
+        |   |   |               |   \---enums
+        |   |   |               |           NumeroDosis.java
+        |   |   |               |           
+        |   |   |               +---config
+        |   |   |               |       SecurityConfig.java
+        |   |   |               |       
+        |   |   |               +---recordatorio
+        |   |   |               |   |   Recordatorio.java
+        |   |   |               |   |   RecordatorioController.java
+        |   |   |               |   |   RecordatorioRepository.java
+        |   |   |               |   |   RecordatorioService.java
+        |   |   |               |   |   RecordatorioServiceImpl.java
+        |   |   |               |   |   
+        |   |   |               |   +---dto
+        |   |   |               |   |       RecordatorioDTO.java
+        |   |   |               |   |       
+        |   |   |               |   \---enums
+        |   |   |               |           EstadoRecordatorio.java
+        |   |   |               |           
+        |   |   |               +---usuario
+        |   |   |               |   |   Administrador.java
+        |   |   |               |   |   AdministradorRepository.java
+        |   |   |               |   |   AdministradorService.java
+        |   |   |               |   |   AuthController.java
+        |   |   |               |   |   Ciudadano.java
+        |   |   |               |   |   CiudadanoRepository.java
+        |   |   |               |   |   CiudadanoService.java
+        |   |   |               |   |   PersonalSalud.java
+        |   |   |               |   |   PersonalSaludRepository.java
+        |   |   |               |   |   PersonalSaludService.java
+        |   |   |               |   |   Usuario.java
+        |   |   |               |   |   UsuarioController.java
+        |   |   |               |   |   UsuarioRepository.java
+        |   |   |               |   |   UsuarioService.java
+        |   |   |               |   |   UsuarioServiceImpl.java
+        |   |   |               |   |   
+        |   |   |               |   +---dto
+        |   |   |               |   |       AuthResponse.java
+        |   |   |               |   |       LoginRequest.java
+        |   |   |               |   |       PersonalSaludDTO.java
+        |   |   |               |   |       UsuarioDTO.java
+        |   |   |               |   |       
+        |   |   |               |   +---enums
+        |   |   |               |   |       EstadoUsuario.java
+        |   |   |               |   |       Genero.java
+        |   |   |               |   |       TipoDocumento.java
+        |   |   |               |   |       
+        |   |   |               |   \---jwt
+        |   |   |               |           JwtUtils.java
+        |   |   |               |           
+        |   |   |               +---vacuna
+        |   |   |               |   |   EsquemaVacunacion.java
+        |   |   |               |   |   EsquemaVacunacionRepository.java
+        |   |   |               |   |   InventarioLote.java
+        |   |   |               |   |   InventarioLoteRepository.java
+        |   |   |               |   |   Vacuna.java
+        |   |   |               |   |   VacunaController.java
+        |   |   |               |   |   VacunaRepository.java
+        |   |   |               |   |   VacunaService.java
+        |   |   |               |   |   VacunaServiceImpl.java
+        |   |   |               |   |   
+        |   |   |               |   +---dto
+        |   |   |               |   |       EsquemaVacunacionDTO.java
+        |   |   |               |   |       InventarioLoteDTO.java
+        |   |   |               |   |       VacunaDTO.java
+        |   |   |               |   |       
+        |   |   |               |   +---enums
+        |   |   |               |   |       CriterioCalculo.java
+        |   |   |               |   |       EstadoVacuna.java
+        |   |   |               |   |       ViaAdministracion.java
+        |   |   |               |   |       
+        |   |   |               |   \---strategy
+        |   |   |               |           CalculoPorEdad.java
+        |   |   |               |           CalculoPorIntervalo.java
+        |   |   |               |           EstrategiaCalculoEsquema.java
+        |   |   |               |           
+        |   |   |               \---Vacunacion
+        |   |   |                   |   EsquemaVacunacion.java
+        |   |   |                   |   EsquemaVacunacionRepository.java
+        |   |   |                   |   InventarioLote.java
+        |   |   |                   |   InventarioLoteRepository.java
+        |   |   |                   |   Vacuna.java
+        |   |   |                   |   Vacunacion.java
+        |   |   |                   |   VacunacionController.java
+        |   |   |                   |   VacunacionRepository.java
+        |   |   |                   |   VacunacionService.java
+        |   |   |                   |   VacunacionServiceImpl.java
+        |   |   |                   |   VacunaController.java
+        |   |   |                   |   VacunaRepository.java
+        |   |   |                   |   VacunaService.java
+        |   |   |                   |   VacunaServiceImpl.java
+        |   |   |                   |   
+        |   |   |                   +---dto
+        |   |   |                   |       EsquemaVacunacionDTO.java
+        |   |   |                   |       InventarioLoteDTO.java
+        |   |   |                   |       VacunacionDTO.java
+        |   |   |                   |       VacunaDTO.java
+        |   |   |                   |       
+        |   |   |                   +---enums
+        |   |   |                   |       CriterioCalculo.java
+        |   |   |                   |       EstadoVacuna.java
+        |   |   |                   |       ViaAdministracion.java
+        |   |   |                   |       
+        |   |   |                   \---strategy
+        |   |   |                           CalculoPorEdad.java
+        |   |   |                           CalculoPorIntervalo.java
+        |   |   |                           EstrategiaCalculoEsquema.java
+        |   |   |                           
+        |   |   \---resources
+        |   |       |   application.properties
+        |   |       |   
+        |   |       \---static
+        |   |               pruebas.html
+        |   |               
+        |   \---test
+        |       \---java
+        |           \---com
+        |               \---sistema_de_vacunacion
+        |                   \---Delta
+        |                           DeltaApplicationTests.java
+        |                           
+        \---target
+            +---classes
+            |   |   application.properties
+            |   |   
+            |   +---com
+            |   |   \---sistema_de_vacunacion
+            |   |       \---Delta
+            |   |           |   DeltaApplication.class
+            |   |           |   
+            |   |           +---auditoria
+            |   |           |   |   Auditoria.class
+            |   |           |   |   AuditoriaController.class
+            |   |           |   |   AuditoriaRepository.class
+            |   |           |   |   AuditoriaService.class
+            |   |           |   |   
+            |   |           |   +---dto
+            |   |           |   |       AuditoriaDTO.class
+            |   |           |   |       
+            |   |           |   \---enums
+            |   |           |           TipoAccionAuditoria.class
+            |   |           |           
+            |   |           +---common
+            |   |           |   \---enums
+            |   |           |           NumeroDosis.class
+            |   |           |           
+            |   |           +---config
+            |   |           |       SecurityConfig.class
+            |   |           |       
+            |   |           +---recordatorio
+            |   |           |   |   Recordatorio.class
+            |   |           |   |   RecordatorioController.class
+            |   |           |   |   RecordatorioRepository.class
+            |   |           |   |   RecordatorioService.class
+            |   |           |   |   RecordatorioServiceImpl.class
+            |   |           |   |   
+            |   |           |   +---dto
+            |   |           |   |       RecordatorioDTO.class
+            |   |           |   |       
+            |   |           |   \---enums
+            |   |           |           EstadoRecordatorio.class
+            |   |           |           
+            |   |           +---usuario
+            |   |           |   |   Administrador.class
+            |   |           |   |   AdministradorRepository.class
+            |   |           |   |   AdministradorService.class
+            |   |           |   |   AuthController.class
+            |   |           |   |   Ciudadano.class
+            |   |           |   |   CiudadanoRepository.class
+            |   |           |   |   CiudadanoService.class
+            |   |           |   |   PersonalSalud.class
+            |   |           |   |   PersonalSaludRepository.class
+            |   |           |   |   PersonalSaludService.class
+            |   |           |   |   Usuario.class
+            |   |           |   |   UsuarioController.class
+            |   |           |   |   UsuarioRepository.class
+            |   |           |   |   UsuarioService.class
+            |   |           |   |   UsuarioServiceImpl.class
+            |   |           |   |   
+            |   |           |   +---dto
+            |   |           |   |       AuthResponse.class
+            |   |           |   |       LoginRequest.class
+            |   |           |   |       PersonalSaludDTO.class
+            |   |           |   |       UsuarioDTO.class
+            |   |           |   |       
+            |   |           |   +---enums
+            |   |           |   |       EstadoUsuario.class
+            |   |           |   |       Genero.class
+            |   |           |   |       TipoDocumento.class
+            |   |           |   |       
+            |   |           |   \---jwt
+            |   |           |           JwtUtils.class
+            |   |           |           
+            |   |           +---vacuna
+            |   |           |   |   EsquemaVacunacion.class
+            |   |           |   |   EsquemaVacunacionRepository.class
+            |   |           |   |   InventarioLote.class
+            |   |           |   |   InventarioLoteRepository.class
+            |   |           |   |   Vacuna.class
+            |   |           |   |   VacunaController.class
+            |   |           |   |   VacunaRepository.class
+            |   |           |   |   VacunaService.class
+            |   |           |   |   VacunaServiceImpl.class
+            |   |           |   |   
+            |   |           |   +---dto
+            |   |           |   |       EsquemaVacunacionDTO.class
+            |   |           |   |       InventarioLoteDTO.class
+            |   |           |   |       VacunaDTO.class
+            |   |           |   |       
+            |   |           |   +---enums
+            |   |           |   |       CriterioCalculo.class
+            |   |           |   |       EstadoVacuna.class
+            |   |           |   |       ViaAdministracion.class
+            |   |           |   |       
+            |   |           |   \---strategy
+            |   |           |           CalculoPorEdad.class
+            |   |           |           CalculoPorIntervalo.class
+            |   |           |           EstrategiaCalculoEsquema.class
+            |   |           |           
+            |   |           \---Vacunacion
+            |   |               +---dto
+            |   |               |       EsquemaVacunacionDTO.class
+            |   |               |       
+            |   |               +---enums
+            |   |               \---strategy
+            |   \---static
+            |           pruebas.html
+            |           
+            +---generated-sources
+            |   \---annotations
+            +---generated-test-sources
+            |   \---test-annotations
+            \---test-classes
+                \---com
+                    \---sistema_de_vacunacion
+                        \---Delta
+                                DeltaApplicationTests.class

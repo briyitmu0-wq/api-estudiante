@@ -1,0 +1,40 @@
+<section class="vacunas-aplicadas">
+  <div class="encabezado">
+    <h1>Vacunas aplicadas</h1>
+    <p class="subtitulo">Historial de dosis recibidas</p>
+  </div>
+
+  @if (cargando()) {
+    <p class="mensaje">Cargando vacunas aplicadas...</p>
+  }
+  @else if (hayResultados()) {
+    <div class="tabla-contenedor">
+      <table class="tabla-vacunas">
+        <thead>
+          <tr>
+            <th>Vacuna</th>
+            <th>Fecha</th>
+            <th>N° Dosis</th>
+            <th>Lote</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          @for (vacunacion of vacunasFiltradas(); track vacunacion.idVacunacion) {
+            <tr>
+              <td>{{ vacunacion.vacuna }}</td>
+              <td>{{ vacunacion.fechaAplicacion | date:'dd/MM/yy' }}</td>
+              <td>{{ vacunacion.dosis }}</td>
+              <td>{{ vacunacion.numeroLote ?? '-' }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+  @else {
+    <p class="mensaje">
+      No tienes vacunas aplicadas registradas.
+    </p>
+  }
+</section>

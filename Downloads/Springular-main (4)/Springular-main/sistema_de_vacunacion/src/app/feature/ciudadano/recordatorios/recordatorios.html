@@ -1,0 +1,62 @@
+<section class="recordatorios">
+
+  <h1>Recordatorios</h1>
+  <p class="subtitulo">Preferencias de notificación</p>
+
+  @if (cargando()) {
+    <p class="estado-carga">Cargando recordatorios...</p>
+  } @else {
+
+    <label class="preferencia">
+      <input
+        type="checkbox"
+        [checked]="mostrarEnSistema()"
+        (change)="cambiarPreferencia($any($event.target).checked)"
+      />
+      <span>Mostrar en el sistema</span>
+    </label>
+
+    @if (mostrarEnSistema()) {
+
+      <!-- Buscador -->
+      <div class="buscador">
+        <i class="bi bi-search"></i>
+        <input
+          type="text"
+          placeholder="Buscar por vacuna..."
+          [value]="terminoBusqueda()"
+          (input)="buscar($any($event.target).value)"
+        />
+        @if (terminoBusqueda()) {
+          <button class="limpiar" (click)="buscar('')">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        }
+      </div>
+
+      @if (hayResultados()) {
+        <table class="tabla-recordatorios">
+          <thead>
+            <tr>
+              <th>Vacuna</th>
+              <th>Fecha Recordatorio</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (r of recordatoriosFiltrados(); track r.id) {
+              <tr>
+                <td>{{ r.mensaje }}</td>
+                <td>{{ formatearFecha(r.fechaProgramada) }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      } @else {
+        <p class="sin-resultados">No se encontraron recordatorios.</p>
+      }
+
+    }
+
+  }
+
+</section>
