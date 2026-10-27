@@ -1,4 +1,4 @@
-const URL_BASE = 'https://api-estudiante-1.onrender.com/api/estudiantes/';
+const URL_BASE = '/api/estudiantes/';
 async function procesarRespuesta(respuesta) {
   if (!respuesta.ok) {
     throw new Error('Error ' + respuesta.status + ': ' + respuesta.statusText);

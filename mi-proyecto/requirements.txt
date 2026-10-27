@@ -1,7 +1,5 @@
-fastapi[standard]
+fastapi
 uvicorn
 pydantic
 psycopg2-binary
 python-dotenv
-mysql-connector-python
-pymysql
