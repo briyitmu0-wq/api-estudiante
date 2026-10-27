@@ -1,0 +1,1 @@
+export const URL_LIBROS = '/api/libros/';
