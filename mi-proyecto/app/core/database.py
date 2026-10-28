@@ -7,10 +7,11 @@ load_dotenv()
 
 class Database:
     def __init__(self):
-        self.host = os.getenv("DB_HOST")
-        self.database = os.getenv("DB_NAME")
-        self.user = os.getenv("DB_USER")
-        self.password = os.getenv("DB_PASSWORD")
+        self.host = os.getenv("DB_HOST", "ep-little-forest-b4bm8ptc-pooler.c-6.us-east-2.aws.neon.tech")
+        self.database = os.getenv("DB_NAME", "neondb")
+        self.user = os.getenv("DB_USER", "neondb_owner")
+        # Contraseña con 'og' al final en minúscula
+        self.password = os.getenv("DB_PASSWORD", "npg_IxGA0f7pPqog")
         self.port = os.getenv("DB_PORT", "5432")
 
     def get_connection(self):
@@ -21,7 +22,8 @@ class Database:
                 user=self.user,
                 password=self.password,
                 port=self.port,
-                sslmode='require'  # Requerido obligatoriamente por Neon DB
+                sslmode='require',
+                cursor_factory=RealDictCursor
             )
         except Exception as e:
             print(f"Error al conectar con la base de datos: {e}")
