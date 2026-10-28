@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from app.api import rutas_estudiantes  
-from app.api import rutas_libros
+from app.api import rutas_libro
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(
@@ -18,7 +18,7 @@ app.add_middleware(
 )
 
 app.include_router(rutas_estudiantes.router, prefix="/api/estudiantes", tags=["Estudiantes"])
-app.include_router(rutas_libros.router, prefix="/api/libros", tags=["Libros"])
+app.include_router(rutas_libro.router, prefix="/api/libros", tags=["Libros"])
 
 @app.get("/")
 def estado_api():
