@@ -2,52 +2,35 @@ from fastapi import APIRouter, HTTPException
 from app.models.estudiante import Estudiante
 from app.repositories.estudiante_repo import EstudianteRepository
 
-router = APIRouter()
+router = APIRouter(prefix="/api", tags=["Gestión de Estudiantes"])
 repo = EstudianteRepository()
 
-@router.get("")
-@router.get("/")
+@router.get("/estudiantes")
 def listar_estudiantes():
-    try:
-        return repo.obtener_todos()
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error en consulta a BD: {str(e)}")
+    return repo.obtener_todos()
 
-@router.get("/{estudiante_id}")
+@router.get("/estudiantes/{estudiante_id}")
 def obtener_estudiante(estudiante_id: int):
-    try:
-        estudiante = repo.obtener_por_id(estudiante_id)
-        if not estudiante:
-            raise HTTPException(status_code=404, detail="Estudiante no encontrado")
-        return estudiante
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error en BD: {str(e)}")
+    estudiante = repo.obtener_por_id(estudiante_id)
+    if not estudiante:
+        raise HTTPException(status_code=404, detail="Estudiante no encontrado")
+    return estudiante
 
-@router.post("")
-@router.post("/")
+@router.post("/estudiantes")
 def crear_estudiante(estudiante: Estudiante):
-    try:
-        nuevo_id = repo.crear(estudiante)
-        return {"mensaje": "Estudiante registrado exitosamente", "id": nuevo_id}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error al crear estudiante: {str(e)}")
+    nuevo_id = repo.crear(estudiante)
+    return {"mensaje": "Estudiante registrado exitosamente", "id": nuevo_id}
 
-@router.delete("/{estudiante_id}")
+@router.delete("/estudiantes/{estudiante_id}")
 def eliminar_estudiante(estudiante_id: int):
-    try:
-        exito = repo.eliminar(estudiante_id)
-        if not exito:
-            raise HTTPException(status_code=404, detail="Estudiante no encontrado")
-        return {"mensaje": "Estudiante eliminado correctamente"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error al eliminar: {str(e)}")
+    exito = repo.eliminar(estudiante_id)
+    if not exito:
+        raise HTTPException(status_code=404, detail="Estudiante no encontrado")
+    return {"mensaje": "Estudiante eliminado correctamente"}
 
-@router.put("/{estudiante_id}")
+@router.put("/estudiantes/{estudiante_id}")
 def actualizar_estudiante(estudiante_id: int, estudiante: Estudiante):
-    try:
-        exito = repo.actualizar(estudiante_id, estudiante)
-        if not exito:
-            raise HTTPException(status_code=404, detail="Estudiante no encontrado")
-        return {"mensaje": "Estudiante actualizado correctamente"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error al actualizar: {str(e)}")
+    exito = repo.actualizar(estudiante_id, estudiante)
+    if not exito:
+        raise HTTPException(status_code=404, detail="Estudiante no encontrado")
+    return {"mensaje": "Estudiante actualizado correctamente"}
