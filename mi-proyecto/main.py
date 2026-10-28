@@ -17,8 +17,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(router_estudiantes, prefix="/api/estudiantes", tags=["Estudiantes"])
-app.include_router(router_libros, prefix="/api/libros", tags=["Libros"])
+# Se incluyen los routers directamente para que tomen el prefijo definido en cada archivo
+app.include_router(router_estudiantes)
+app.include_router(router_libros)
 
 @app.get("/")
 def estado_api():
